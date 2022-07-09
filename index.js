@@ -1,6 +1,6 @@
 
 // Entry Point of the API Server
-
+const fs = require('fs');
 const express = require('express');
 
 /* Creates an Express application.
@@ -43,15 +43,72 @@ pool.connect((err, client, release) => {
     }
     console.log("Connected to Database !")
   })
+  const seedQuery = fs.readFileSync('seed.sql', { encoding: 'utf8' });
+
+  pool.query(seedQuery, (err, res) => {
+    console.log(err, res)
+    console.log('Seeding Completed!')
+    pool.end()
+  })
 })
 
-app.get('/api', (req, res, next) => {
-  console.log("TEST DATA :");
-  pool.query('Select * from test')
+// ENDPOINT for get all doctors
+app.get('/doctors', (req, res, next) => {
+  // console.log("TEST DATA :");
+  pool.query('Select * from doctors')
     .then(testData => {
       console.log(testData);
       res.send(testData.rows);
     })
+})
+
+// ENDPOINT for getting all appointments on a particular day for a particular doctor
+app.get('/appointments', (req, res, next) => {
+  console.log(req.query);
+  const doctorId = req.query.doctorId;
+  const appointmentsDay = req.query.date;
+  console.log(appointmentsDay);
+  pool.query(`Select * from appointments where doctor_id=${doctorId} and date='${appointmentsDay}'`)
+  .then(appointments => {
+    console.log(appointments);
+    res.send(appointments.rows);
+  })
+})
+
+// Endpoint for delecting an appointment
+app.delete('/appointments', (req, res, next) => {
+  console.log('this is different $$$$$');
+  console.log('req.query: ', req.query.appointmentId);
+  const appointmentId = parseInt(req.query.appointmentId);
+  console.log('appointmentId: ', appointmentId);
+  pool.query(`Delete from appointments where id=${appointmentId}`)
+  .then(appointments => {
+    console.log(appointments);
+    res.send(appointments.rows);
+  })
+})
+
+// Endpoint for adding an appointment
+app.post('/appointments', (req, res, next) => {
+  const { patient_first_name, patient_last_name, date, time, kind, doctorId } = req.body;
+  const timeInterval = time.split(':')[1];
+  const acceptableTimes = [00, 15, 30, 45];
+  if (!acceptableTimes.includes(timeInterval)) {
+    throw new Error('Appointment times only allowed in 15 min intervals.');
+  }
+
+  pool.query(`select * from appointments where doctor_id=${doctorId} and and date='${appointmentsDay}' and time=${time}`).then(appointments => {
+    if(appointments.length > 3) {
+      throw new Error(`This doctor's appointments for ${date} at ${time} are already full. Please select another time slot.`);
+    }
+  })
+
+  const sql = `insert into appointments values(${patient_first_name},${patient_last_name},'${date}',${time} ${kind},${doctorId}) `;
+  pool.query(sql)
+  .then(newAppointment => {
+    console.log(newAppointment);
+    res.send(newAppointment.rows);
+  })
 })
 
 // Require the Routes API
