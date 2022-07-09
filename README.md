@@ -18,10 +18,10 @@
 ![Screen Shot 2022-07-09 at 3 41 17 PM](https://user-images.githubusercontent.com/90875226/178124938-9a733f56-f703-457c-a0d5-eed747f7afa9.png)
 
 4. Start postgreSQL
-   ```shell
+```shelll
  brew services start postgresql
-   ```
-   either through homebrew or psql shell
+ either through homebrew or psql shell
+ ```
    
    
     
